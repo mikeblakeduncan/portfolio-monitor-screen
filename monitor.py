@@ -260,6 +260,15 @@ def in_cooldown(state, ticker, today):
     return (today - date.fromisoformat(last)).days < COOLDOWN_DAYS
 
 
+def prune_state(state, today):
+    """Drop entries past their cooldown. They no longer suppress anything."""
+    return {
+        ticker: stamped
+        for ticker, stamped in state.items()
+        if (today - date.fromisoformat(stamped)).days < COOLDOWN_DAYS
+    }
+
+
 # ---------------------------------------------------------------- email
 
 def pct(value):
@@ -363,7 +372,7 @@ def main():
 
     for alert in shown:
         state[alert["ticker_raw"]] = today.isoformat()
-    save_state(state)
+    save_state(prune_state(state, today))
 
     subject = (
         f"Watchlist — {len(shown)} to look at"
